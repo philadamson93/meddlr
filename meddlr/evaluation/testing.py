@@ -183,13 +183,15 @@ def find_weights(
     )
     best_iter_and_values = metric_details["best_iter_and_values"][:top_k]
     last_iter = metric_details["last_iter"]
-
     all_filepaths = []
     all_values = []
     potential_ckpt_files = os.listdir(cfg.OUTPUT_DIR)
     for best_iter, best_value in best_iter_and_values:
         file_name = file_name_fmt.format(best_iter)
-
+        # PA 1/18/2023 work around for mismatch between metrics.json reported saved files
+        # and checkpoints that were actually saved.
+        file_name = [filename for filename in potential_ckpt_files if filename.endswith(".pth")][-1]
+        # end PA 1/18/2023
         matched_files = [x for x in potential_ckpt_files if re.match(file_name, x)]
         if len(matched_files) > 1:
             raise ValueError(
