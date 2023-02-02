@@ -49,9 +49,10 @@ def build_loss_computer(cfg, name, **kwargs):
 
 
 class LossComputer(ABC):
-    def __init__(self, cfg, loss_func: Callable = None):
+    def __init__(self, cfg, alpha=1, loss_func: Callable = None):
         self._normalizer = build_normalizer(cfg)
         self.loss_func = loss_func
+        self.alpha = alpha
 
     @abstractmethod
     def __call__(self, input, output):
@@ -144,7 +145,10 @@ class LossComputer(ABC):
         elif self.loss_func is not None:
             output = cplx.channels_first(output)
             target = cplx.channels_first(target)
-            metrics_dict["loss"] = self.loss_func(output, target)
+            metrics_dict["loss_func"] = self.loss_func(output, target).mean()
+            metrics_dict["loss"] = (
+                self.alpha * metrics_dict["loss_func"] + (1 - self.alpha) * metrics_dict["l1"]
+            )
         else:
             loss = metrics_dict[loss_name]
             metrics_dict["loss"] = loss
@@ -156,6 +160,9 @@ class LossComputer(ABC):
 class BasicLossComputer(LossComputer):
     def __init__(self, cfg):
         loss_name = cfg.MODEL.RECON_LOSS.NAME
+        alpha = cfg.MODEL.RECON_LOSS.ALPHA
+        if not 0 <= alpha <= 1:
+            raise ValueError("Loss function weighting alpha must be between 0 and 1")
         if loss_name in IMAGE_LOSSES or loss_name in KSPACE_LOSSES:
             loss_func = None
         else:
@@ -172,7 +179,7 @@ class BasicLossComputer(LossComputer):
         self.loss = loss_name
         self.renormalize_data = cfg.MODEL.RECON_LOSS.RENORMALIZE_DATA
 
-        super().__init__(cfg, loss_func=loss_func)
+        super().__init__(cfg, alpha=alpha, loss_func=loss_func)
 
     def __call__(self, input, output):
         pred: torch.Tensor = output["pred"]

@@ -82,6 +82,9 @@ _C.MODEL.UNROLLED.CONV_BLOCK.ORDER = ("norm", "act", "drop", "conv")
 _C.MODEL.RECON_LOSS = CN()
 # The reconstruction loss type. See :obj:`meddlr.modeling.loss_computer` for options.
 _C.MODEL.RECON_LOSS.NAME = "l1"
+# Scalar weighting [0,1] of the loss function where the remaining is l1 loss.
+# Total Loss = alpha*_C.MODEL.RECON_LOSS.NAME + (1-alpha)*l1
+_C.MODEL.RECON_LOSS.ALPHA = 1.0
 # Whether to renormalize the predicted image before computing the loss.
 _C.MODEL.RECON_LOSS.RENORMALIZE_DATA = True
 # Consistency configuration. Used for Noise2Recon and VORTEX.
