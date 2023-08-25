@@ -4,8 +4,10 @@ from copy import deepcopy
 from typing import Any, Dict
 
 from meddlr.metrics.collection import MetricCollection
+from meddlr.metrics.dists import DISTS
 from meddlr.metrics.image import MAE, MSE, NRMSE, PSNR, RMSE, SSIM
 from meddlr.metrics.lpip import LPIPS
+from meddlr.metrics.sdfd import SDFD
 from meddlr.metrics.sem_seg import ASSD, CV, DSC, VOE
 from meddlr.metrics.ssfd import SSFD
 
@@ -77,9 +79,21 @@ _BUILTIN_METRICS = {
     #   https://openreview.net/forum?id=dgMvTzf6M_3
     # Default of mode: grayscale chosen as we work with grayscale images in MRI.
     "SSFD": (SSFD, {"mode": "grayscale",
-                    "layer_names": ("block4_relu2",)})
+                    "layer_names": ("block5_relu2",)
+                    }),
+
+    # Diffusion VAE from https://github.com/sluijs/explatent/tree/master
+    # using 8x4 latents
+    "SDFD": (SDFD, {"mode" : "grayscale",
+                    "latent_mode" : "all"
+                    }),
+
+    #  Deep Image Structure and Texture Similarity
+    #  Ding, Keyan, et al. "Image quality assessment: Unifying structure and
+    #  texture similarity." IEEE transactions on pattern analysis and machine
+    #  intelligence 44.5 (2020): 2567-2581
+    "DISTS": (DISTS, {"mode": "grayscale"})
 }
-# fmt: on
 
 
 def build_metrics(metric_names, fmt: str = None, **kwargs) -> MetricCollection:
