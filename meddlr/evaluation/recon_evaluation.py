@@ -55,6 +55,7 @@ class ReconEvaluator(ScanEvaluator):
         flush_period: int = 0,
         to_cpu: bool = False,
         channel_names: Optional[Sequence[str]] = None,
+        layer_names: Optional[Sequence[str]] = None,
         eval_in_process: bool = False,
         structure_channel_by=None,
         prefix: str = "val",
@@ -123,6 +124,7 @@ class ReconEvaluator(ScanEvaluator):
         self._aggregate_scans = aggregate_scans
         self._skip_rescale = skip_rescale
         self._channel_names = channel_names
+        self._layer_names = layer_names
         self._structure_channel_by = structure_channel_by
         self._prefix = prefix
         self._postprocess = postprocess
@@ -175,6 +177,7 @@ class ReconEvaluator(ScanEvaluator):
             slice_metrics,
             fmt=prefix + "{}",
             channel_names=self._channel_names,
+            layer_names=self._layer_names,
         ).to(self.device)
         self.scan_metrics = build_metrics(
             scan_metrics,

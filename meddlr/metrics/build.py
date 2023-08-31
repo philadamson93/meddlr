@@ -79,7 +79,7 @@ _BUILTIN_METRICS = {
     #   https://openreview.net/forum?id=dgMvTzf6M_3
     # Default of mode: grayscale chosen as we work with grayscale images in MRI.
     "SSFD": (SSFD, {"mode": "grayscale",
-                    "layer_names": ("block5_relu2",)
+                    "layer_names": ("block4_relu2",)
                     }),
 
     # Diffusion VAE from https://github.com/sluijs/explatent/tree/master
@@ -110,7 +110,6 @@ def build_metrics(metric_names, fmt: str = None, **kwargs) -> MetricCollection:
         klass, base_kwargs = _BUILTIN_METRICS[name]
         signature = inspect.signature(klass)
         klass_kwargs = {k: v for k, v in kwargs.items() if k in signature.parameters}
-
         shared_keys = base_kwargs.keys() & klass_kwargs.keys()
         if shared_keys:
             logger.warning(
