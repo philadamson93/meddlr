@@ -1,0 +1,55 @@
+AUG_TRAIN:
+  UNDERSAMPLE:
+    NAME: "RandomMaskFunc1D"
+    ACCELERATIONS: (8,)
+    CALIBRATION_SIZE: 0
+    CENTER_FRACTIONS: (0.04,)
+AUG_TEST:
+  UNDERSAMPLE:
+    ACCELERATIONS: (8,)
+DATALOADER:
+  DROP_LAST: True
+  NUM_WORKERS: 4
+  DATA_KEYS: (("target", "espirit-cf=8/target"), ("maps", "espirit-cf=8/maps"))
+DATASETS:
+  TRAIN: ("fastMRI_knee_multicoil_v0.0.1_train",)
+  VAL: ("fastMRI_knee_multicoil_v0.0.1_val",)
+  TEST: ("fastMRI_knee_multicoil_v0.0.1_test",)
+DESCRIPTION:
+  BRIEF: Unet network (5 pools, 32 features) on fastmri knee multicoil dataset @ (8,)x
+    undersampling. LPIPS as loss function.
+  ENTITY_NAME: ss_recon
+  EXP_NAME: fastmri-knee/8x/unet-LPIPS/v5
+  PROJECT_NAME: self-sup-imaging
+  TAGS: ("fastmri_knee", "unet", "8x", "lpips")
+MODEL:
+  RECON_LOSS:
+    NAME: LPIPS
+    RENORMALIZE_DATA: false
+  UNET:
+    BLOCK_ORDER: ("conv", "relu", "conv", "relu", "batchnorm", "dropout")
+    CHANNELS: 32
+    DROPOUT: 0.0
+    IN_CHANNELS: 2
+    NORMALIZE: false
+    NUM_POOL_LAYERS: 5
+    OUT_CHANNELS: 2
+  WEIGHTS: ''
+OUTPUT_DIR: /bmrNAS/people/padamson/results/meddlr/mri-recon/fastmri-knee/unet/LPIPS/version_005
+SEED: 1000
+SOLVER:
+  MAX_ITER: 200
+  OPTIMIZER: Adam
+  STEPS: []
+  TEST_BATCH_SIZE: 2
+  TRAIN_BATCH_SIZE: 2
+TEST:
+  EVAL_PERIOD: 10
+  EXPECTED_RESULTS: []
+  FLUSH_PERIOD: -20
+  VAL_AS_TEST: true
+  VAL_METRICS:
+    RECON: ("psnr", "psnr_scan", "psnr_mag", "psnr_mag_scan", "nrmse", "nrmse_scan", "nrmse_mag", "nrmse_mag_scan", "ssim (Wang)", "LPIPS", "SSFD")
+TIME_SCALE: epoch
+VERSION: 1
+VIS_PERIOD: -400

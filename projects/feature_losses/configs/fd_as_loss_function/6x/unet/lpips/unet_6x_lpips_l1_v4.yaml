@@ -1,0 +1,153 @@
+AUG_TRAIN:
+  UNDERSAMPLE:
+    NAME: "RandomMaskFunc1D"
+    ACCELERATIONS: (6,)
+    CALIBRATION_SIZE: 0
+    CENTER_FRACTIONS: (0.04,)
+AUG_TEST:
+  UNDERSAMPLE:
+    ACCELERATIONS: (6,)
+DATALOADER:
+  DROP_LAST: True
+  NUM_WORKERS: 4
+  DATA_KEYS: (("target", "espirit-cf=8/target"), ("maps", "espirit-cf=8/maps"))
+  SUBSAMPLE_TRAIN:
+      NUM_TOTAL: -1
+      NUM_TOTAL_BY_GROUP: (("acquisition", {"CORPDFS_FBK":27, "CORPD_FBK":27}),)
+      NUM_UNDERSAMPLED: 0
+      NUM_VAL: -1
+      NUM_VAL_BY_GROUP: []
+      SEED: 1000
+DATASETS:
+  TRAIN: ("fastMRI_knee_multicoil_mini_v0.0.1_train",)
+  VAL: ("fastMRI_knee_multicoil_mini_v0.0.1_val",)
+  TEST: ("fastMRI_knee_multicoil_mini_v0.0.1_test",)
+DESCRIPTION:
+  BRIEF: Unet network (4 pools, 32 features) on half fastmri knee mini multicoil dataset @ (6,)x
+    undersampling. LPIPS and L1 weighted sum as loss function. Alpha 0.9.
+  ENTITY_NAME: ss_recon
+  EXP_NAME: fastmri-knee/6x/unet-LPIPS-L1/v4
+  PROJECT_NAME: self-sup-imaging
+  TAGS: ("fastmri_knee_mini", "unet", "6x", "LPIPS", "L1", "reader_study")
+MODEL:
+  A2R:
+    META_ARCHITECTURE: GeneralizedUnrolledCNN
+    USE_SUPERVISED_CONSISTENCY: false
+  CONSISTENCY:
+    AUG:
+      MOTION:
+        RANGE: (0.2, 0.5)
+        SCHEDULER:
+          WARMUP_ITERS: 0
+          WARMUP_METHOD: ''
+      MRI_RECON:
+        AUG_SENSITIVITY_MAPS: true
+        SCHEDULER_P:
+          IGNORE: false
+        TRANSFORMS: []
+      NOISE:
+        MASK:
+          RHO: 1.0
+        SCHEDULER:
+          WARMUP_ITERS: 0
+          WARMUP_METHOD: ''
+        STD_DEV: (1,)
+    LATENT_LOSS_NAME: mag_l1
+    LATENT_LOSS_WEIGHT: 0.1
+    LOSS_NAME: l1
+    LOSS_WEIGHT: 0.1
+    NUM_LATENT_LAYERS: 1
+    USE_CONSISTENCY: true
+    USE_LATENT: false
+  CS:
+    MAX_ITER: 200
+    REGULARIZATION: 0.005
+  DENOISING:
+    META_ARCHITECTURE: GeneralizedUnrolledCNN
+    NOISE:
+      STD_DEV: (1,)
+      USE_FULLY_SAMPLED_TARGET: true
+      USE_FULLY_SAMPLED_TARGET_EVAL: null
+  DEVICE: cuda
+  M2R:
+    META_ARCHITECTURE: GeneralizedUnrolledCNN
+    USE_SUPERVISED_CONSISTENCY: false
+  META_ARCHITECTURE: UnetModel
+  N2R:
+    META_ARCHITECTURE: GeneralizedUnrolledCNN
+    USE_SUPERVISED_CONSISTENCY: false
+  NM2R:
+    META_ARCHITECTURE: GeneralizedUnrolledCNN
+    USE_SUPERVISED_CONSISTENCY: false
+  NORMALIZER:
+    KEYWORDS: []
+    NAME: TopMagnitudeNormalizer
+  RECON_LOSS:
+    NAME: LPIPS
+    ALPHA: 0.9
+    RENORMALIZE_DATA: false
+  SEG:
+    ACTIVATION: sigmoid
+    CLASSES: []
+    INCLUDE_BACKGROUND: false
+  SSDU:
+    MASKER:
+      PARAMS: {}
+    META_ARCHITECTURE: GeneralizedUnrolledCNN
+  UNET:
+    BLOCK_ORDER: ("conv", "relu", "conv", "relu", "batchnorm", "dropout")
+    CHANNELS: 32
+    DROPOUT: 0.0
+    IN_CHANNELS: 2
+    NORMALIZE: false
+    NUM_POOL_LAYERS: 4
+    OUT_CHANNELS: 2
+  UNROLLED:
+    BLOCK_ARCHITECTURE: ResNet
+    CONV_BLOCK:
+      ACTIVATION: relu
+      NORM: none
+      NORM_AFFINE: false
+      ORDER: ("norm", "act", "drop", "conv")
+    DROPOUT: 0.0
+    FIX_STEP_SIZE: false
+    KERNEL_SIZE: (3,)
+    NUM_EMAPS: 1
+    NUM_FEATURES: 128
+    NUM_RESBLOCKS: 2
+    NUM_UNROLLED_STEPS: 5
+    PADDING: ''
+    SHARE_WEIGHTS: false
+    STEP_SIZES: (-2.0,)
+  WEIGHTS: ''
+OUTPUT_DIR: /bmrNAS/people/padamson/results/meddlr/mri-recon/fastmri-knee/6x/unet/LPIPS/version_004
+SEED: 1000
+SOLVER:
+  BASE_LR: 0.0001
+  BIAS_LR_FACTOR: 1.0
+  CHECKPOINT_PERIOD: 10
+  GAMMA: 0.1
+  GRAD_ACCUM_ITERS: 4
+  LR_SCHEDULER_NAME: ''
+  MAX_ITER: 200
+  MOMENTUM: 0.9
+  OPTIMIZER: Adam
+  STEPS: []
+  TEST_BATCH_SIZE: 16
+  TRAIN_BATCH_SIZE: 16
+  WARMUP_FACTOR: 0.001
+  WARMUP_ITERS: 1000
+  WARMUP_METHOD: linear
+  WEIGHT_DECAY: 0.0001
+  WEIGHT_DECAY_BIAS: 0.0001
+  WEIGHT_DECAY_NORM: 0.0
+TEST:
+  EVAL_PERIOD: 10
+  EXPECTED_RESULTS: []
+  FLUSH_PERIOD: -20
+  VAL_AS_TEST: true
+  VAL_METRICS:
+    RECON: ("psnr", "psnr_scan", "psnr_mag", "psnr_mag_scan", "nrmse", "nrmse_scan", "nrmse_mag", "nrmse_mag_scan", "ssim (Wang)", "LPIPS", "SSFD")
+TIME_SCALE: epoch
+VERSION: 1
+VIS_PERIOD: -400
