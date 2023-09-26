@@ -61,3 +61,10 @@ docs/source/apidocs/generated
 
 # temp
 **/temp
+
+# ignore bash scripts
+*.sh
+
+# ignore weight files (move these elsewhere)
+*.ckpt
+*.pt
