@@ -180,6 +180,71 @@ class TranslationTransform(GeometricMixin, Transform):
 
 
 @TRANSFORM_REGISTRY.register()
+class TranslationTransformInterpolate(GeometricMixin, Transform):
+    def __init__(
+        self, translate: Sequence[int], pad_mode="constant", pad_value=0, scale_factor=1
+    ) -> None:
+        super().__init__()
+        self.translate = translate
+        self.scale_factor = scale_factor
+        self.pad_mode = pad_mode
+        self.pad_value = pad_value
+
+    def apply_image(self, img: torch.Tensor):
+        translation = self.translate
+        max_dims = len(translation) + 2
+
+        is_complex = cplx.is_complex(img)
+        permute = is_complex or cplx.is_complex_as_real(img)
+        if is_complex:
+            img = torch.view_as_real(img)
+        if permute:
+            img = img.permute((img.ndim - 1,) + tuple(range(0, img.ndim - 1)))
+
+        shape = img.shape
+        use_view = img.ndim > max_dims
+        if use_view:
+            is_contiguous = img.is_contiguous()
+            if is_contiguous:
+                img = img.view((np.product(shape[: -(max_dims - 1)]),) + shape[-(max_dims - 1) :])
+            else:
+                img = img.reshape(
+                    (np.product(shape[: -(max_dims - 1)]),) + shape[-(max_dims - 1) :]
+                )
+
+        # Upsample so integer shifts can be used
+        img = F.interpolate(
+            img, scale_factor=self.scale_factor, mode="bicubic", recompute_scale_factor=True
+        )
+        upscaled_translation = [int(self.scale_factor * t) for t in translation]
+
+        pad, sl = _get_mraugment_translate_pad(img.shape, upscaled_translation)
+        img = F.pad(img, pad, mode=self.pad_mode, value=self.pad_value)
+        img = img[sl]
+
+        # downsample again to original resolution to compute metrics
+        img = F.interpolate(
+            img, scale_factor=1 / self.scale_factor, mode="bicubic", recompute_scale_factor=True
+        )
+
+        if use_view:
+            img = img.view(shape)
+
+        if permute:
+            img = img.permute(tuple(range(1, img.ndim)) + (0,))
+        if is_complex:
+            img = torch.view_as_complex(img.contiguous())
+        return img
+
+    def apply_maps(self, maps: torch.Tensor):
+        maps = self.apply_image(maps)  # BxCxMxHxW
+        norm = cplx.rss(maps, dim=1).unsqueeze(1)
+        norm += 1e-8 * (norm == 0)
+        maps = maps / norm
+        return maps
+
+
+@TRANSFORM_REGISTRY.register()
 class FlipTransform(GeometricMixin, Transform):
     def __init__(self, dims):
         super().__init__()
